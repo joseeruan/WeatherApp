@@ -33,6 +33,9 @@ import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.example.weatherap.db.fb.FBDatabase
+import com.example.weatherap.db.fb.toFBUser
+import com.example.weatherap.model.User
 import com.example.weatherap.ui.theme.WeatherApTheme
 import com.google.firebase.Firebase
 import com.google.firebase.auth.auth
@@ -54,7 +57,7 @@ class RegisterActivity : ComponentActivity() {
 @Preview(showBackground = true)
 @Composable
 fun RegisterPage(modifier: Modifier = Modifier) {
-    var nome by rememberSaveable { mutableStateOf("") }
+    var name by rememberSaveable { mutableStateOf("") }
     var email by rememberSaveable { mutableStateOf("") }
     var password by rememberSaveable { mutableStateOf("") }
     var confirmPassword by rememberSaveable { mutableStateOf("") }
@@ -78,10 +81,10 @@ fun RegisterPage(modifier: Modifier = Modifier) {
         Spacer(modifier = Modifier.size(16.dp))
 
         OutlinedTextField(
-            value = nome,
+            value = name,
             label = { Text(text = "Nome completo") },
             modifier = fieldModifier,
-            onValueChange = { nome = it },
+            onValueChange = { name = it },
             keyboardOptions = KeyboardOptions(capitalization = KeyboardCapitalization.Words)
         )
 
@@ -130,13 +133,14 @@ fun RegisterPage(modifier: Modifier = Modifier) {
                             if (task.isSuccessful) {
                                 Toast.makeText(activity,
                                     "Registro OK!", Toast.LENGTH_LONG).show()
+                                FBDatabase().register(User(name, email).toFBUser())
                             } else {
                                 Toast.makeText(activity,
                                     "Registro FALHOU!", Toast.LENGTH_LONG).show()
                             }
                         }
                 },
-                enabled = nome.isNotBlank() &&
+                enabled = name.isNotBlank() &&
                         email.isNotBlank() &&
                         password.isNotEmpty() &&
                         password == confirmPassword
@@ -146,7 +150,7 @@ fun RegisterPage(modifier: Modifier = Modifier) {
 
             Button(
                 onClick = {
-                    nome = ""
+                    name = ""
                     email = ""
                     password = ""
                     confirmPassword = ""
