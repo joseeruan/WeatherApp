@@ -1,7 +1,7 @@
 package com.example.weatherap
 
+import android.app.Activity
 import android.content.Intent
-import android.content.Intent.FLAG_ACTIVITY_SINGLE_TOP
 import android.os.Bundle
 import android.widget.Toast
 import androidx.activity.ComponentActivity
@@ -31,6 +31,8 @@ import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.google.firebase.Firebase
+import com.google.firebase.auth.auth
 
 class LoginActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -50,7 +52,7 @@ fun LoginPage(modifier: Modifier = Modifier) {
     var email by rememberSaveable { mutableStateOf("") }
     var password by rememberSaveable { mutableStateOf("") }
 
-    val activity = LocalActivity.current
+    val activity = LocalActivity.current as Activity
 
     Column(
         modifier = modifier.padding(24.dp).fillMaxSize(),
@@ -88,11 +90,14 @@ fun LoginPage(modifier: Modifier = Modifier) {
         ) {
             Button(
                 onClick = {
-                    Toast.makeText(activity, "Login OK!", Toast.LENGTH_LONG).show()
-                    activity?.startActivity(
-                        Intent(activity, MainActivity::class.java)
-                            .setFlags(FLAG_ACTIVITY_SINGLE_TOP)
-                    )
+                    Firebase.auth.signInWithEmailAndPassword(email, password)
+                        .addOnCompleteListener(activity) { task ->
+                            if (task.isSuccessful) {
+                                Toast.makeText(activity, "Login OK!", Toast.LENGTH_LONG).show()
+                            } else {
+                                Toast.makeText(activity, "Login FALHOU!", Toast.LENGTH_LONG).show()
+                            }
+                        }
                 },
                 enabled = email.isNotEmpty() && password.isNotEmpty(),
             ) {
@@ -115,7 +120,7 @@ fun LoginPage(modifier: Modifier = Modifier) {
 
         Button(
             onClick = {
-                activity?.startActivity(Intent(activity, RegisterActivity::class.java))
+                activity.startActivity(Intent(activity, RegisterActivity::class.java))
             },
         ) {
             Text("Registre-se")

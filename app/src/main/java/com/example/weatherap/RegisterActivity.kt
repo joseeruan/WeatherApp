@@ -34,6 +34,8 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.weatherap.ui.theme.WeatherApTheme
+import com.google.firebase.Firebase
+import com.google.firebase.auth.auth
 
 class RegisterActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -57,7 +59,7 @@ fun RegisterPage(modifier: Modifier = Modifier) {
     var password by rememberSaveable { mutableStateOf("") }
     var confirmPassword by rememberSaveable { mutableStateOf("") }
 
-    val activity = LocalActivity.current as? Activity
+    val activity = LocalActivity.current as Activity
 
     Column(
         modifier = modifier
@@ -123,8 +125,16 @@ fun RegisterPage(modifier: Modifier = Modifier) {
         ) {
             Button(
                 onClick = {
-                    Toast.makeText(activity, "Registro realizado com sucesso!", Toast.LENGTH_LONG).show()
-                    activity?.finish()
+                    Firebase.auth.createUserWithEmailAndPassword(email, password)
+                        .addOnCompleteListener(activity) { task ->
+                            if (task.isSuccessful) {
+                                Toast.makeText(activity,
+                                    "Registro OK!", Toast.LENGTH_LONG).show()
+                            } else {
+                                Toast.makeText(activity,
+                                    "Registro FALHOU!", Toast.LENGTH_LONG).show()
+                            }
+                        }
                 },
                 enabled = nome.isNotBlank() &&
                         email.isNotBlank() &&
