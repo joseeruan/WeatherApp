@@ -11,7 +11,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.core.content.ContextCompat
 import com.example.weatherap.model.MainViewModel
-import com.google.android.gms.maps.model.BitmapDescriptorFactory
+import com.example.weatherap.model.Weather
 import com.google.android.gms.maps.model.LatLng
 import com.google.maps.android.compose.GoogleMap
 import com.google.maps.android.compose.MapProperties
@@ -44,35 +44,18 @@ fun MapPage(modifier: Modifier = Modifier, viewModel: MainViewModel) {
         modifier = modifier.fillMaxSize(),
         cameraPositionState = camPosState,
         onMapClick = {
-            viewModel.add("Cidade@${it.latitude}:${it.longitude}", location = it)
+            viewModel.addCity( it)
         },
         properties = MapProperties(isMyLocationEnabled = hasLocationPermission),
         uiSettings = MapUiSettings(myLocationButtonEnabled = hasLocationPermission)
     ) {
-        Marker(
-            state = recife,
-            title = "Recife",
-            snippet = "Marcador em Recife",
-            icon = BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_BLUE)
-        )
-        Marker(
-            state = caruaru,
-            title = "Caruaru",
-            snippet = "Marcador em Caruaru",
-            icon = BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_RED)
-        )
-        Marker(
-            state = joaopessoa,
-            title = "João Pessoa",
-            snippet = "Marcador em João Pessoa",
-            icon = BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_GREEN)
-        )
-
         viewModel.cities.forEach {
             if (it.location != null) {
+                val weather = viewModel.weather(it.name)
+                val desc = if (weather == Weather.LOADING) "Carregando clima..."
+                else weather.desc
                 Marker( state = MarkerState(position = it.location),
-                    title = it.name, snippet = "${it.location}")
-            }
-        }
-    }
+                    title = it.name, snippet = desc
+                ) }
+    } }
 }
