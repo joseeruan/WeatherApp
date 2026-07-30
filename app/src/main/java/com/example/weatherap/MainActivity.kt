@@ -49,7 +49,7 @@ class MainActivity : ComponentActivity() {
             val navController = rememberNavController()
             val fbDB = remember { FBDatabase() }
 
-            val weatherService = remember { WeatherService() }
+            val weatherService = remember { WeatherService(this) }
 
             val viewModel : MainViewModel = viewModel(
                 factory = MainViewModelFactory(fbDB, weatherService)
@@ -110,7 +110,7 @@ class MainActivity : ComponentActivity() {
                             navController.graph.startDestinationRoute?.let {
                                 popUpTo(it) {
                                     saveState = true
-                                }
+                                  }
                                 restoreState = true
                             }
                             launchSingleTop = true
