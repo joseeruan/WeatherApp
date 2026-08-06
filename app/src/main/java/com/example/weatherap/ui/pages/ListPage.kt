@@ -1,4 +1,5 @@
 package com.example.weatherap.ui.pages
+
 import android.app.Activity
 import android.widget.Toast
 import androidx.activity.compose.LocalActivity
@@ -20,11 +21,13 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import coil.compose.AsyncImage
 import com.example.weatherap.R
 import com.example.weatherap.model.City
@@ -33,26 +36,57 @@ import com.example.weatherap.model.Weather
 import com.example.weatherap.ui.nav.Route
 
 @Composable
-fun ListPage(modifier: Modifier = Modifier, viewModel : MainViewModel) {
-    val cityList = viewModel.cities
-    val activity = LocalActivity.current as Activity // Para os Toasts
+fun ListPage(
+    modifier: Modifier = Modifier,
+    viewModel: MainViewModel
+) {
+    val cityMap = viewModel.cities
+        .collectAsStateWithLifecycle(emptyMap())
+        .value
+
+    val cityList = cityMap.values
+        .toList()
+        .sortedBy { it.name }
+
+    val weatherMap = viewModel.weather
+        .collectAsStateWithLifecycle(emptyMap())
+        .value
+
+    val activity = LocalActivity.current as Activity
+
     LazyColumn(
         modifier = modifier
             .fillMaxSize()
             .padding(8.dp)
     ) {
-        items( items = cityList, key = { it.name }) { city ->
-            CityItem(city = city, weather = viewModel.weather(city.name), onClose = {
-                Toast.makeText(
-                    activity,
-                    "Cidade ${city.name} removida!",
-                    Toast.LENGTH_LONG
-                ).show()
-                viewModel.remove(city)
-            }, onClick = {
-                viewModel.city = city.name
-                viewModel.page = Route.Home
-            })
+        items(
+            items = cityList,
+            key = { it.name }
+        ) { city ->
+            LaunchedEffect(city.name) {
+                viewModel.loadWeather(city.name)
+            }
+
+            val weather =
+                weatherMap[city.name] ?: Weather.LOADING
+
+            CityItem(
+                city = city,
+                weather = weather,
+                onClose = {
+                    Toast.makeText(
+                        activity,
+                        "Cidade ${city.name} removida!",
+                        Toast.LENGTH_LONG
+                    ).show()
+
+                    viewModel.remove(city)
+                },
+                onClick = {
+                    viewModel.city = city.name
+                    viewModel.page = Route.Home
+                }
+            )
         }
     }
 }
@@ -65,7 +99,11 @@ fun CityItem(
     onClose: () -> Unit,
     modifier: Modifier = Modifier
 ) {
-    val desc = if (weather == Weather.LOADING) "Carregando clima..." else weather.desc
+    val desc = if (weather == Weather.LOADING) {
+        "Carregando clima..."
+    } else {
+        weather.desc
+    }
 
     val icon = if (city.isMonitored) {
         Icons.Filled.Notifications
@@ -77,24 +115,34 @@ fun CityItem(
         modifier = modifier
             .fillMaxWidth()
             .padding(8.dp)
-            .clickable { onClick() },
+            .clickable {
+                onClick()
+            },
         verticalAlignment = Alignment.CenterVertically
     ) {
-        AsyncImage( // Substitui o Icon(...)
+        AsyncImage(
             model = weather.imgUrl,
-            modifier = Modifier.size(75.dp), // Use Modifier aqui
+            modifier = Modifier.size(75.dp),
             error = painterResource(id = R.drawable.loading),
             contentDescription = "Imagem"
         )
+
         Spacer(modifier = Modifier.size(12.dp))
-        Column(modifier = modifier.weight(1f)) {
-            Text(modifier = Modifier,
+
+        Column(
+            modifier = Modifier.weight(1f)
+        ) {
+            Text(
                 text = city.name,
-                fontSize = 24.sp)
-            Text(modifier = Modifier,
+                fontSize = 24.sp
+            )
+
+            Text(
                 text = desc,
-                fontSize = 16.sp)
+                fontSize = 16.sp
+            )
         }
+
         Icon(
             imageVector = icon,
             contentDescription = "Monitorada?",
@@ -102,7 +150,10 @@ fun CityItem(
         )
 
         IconButton(onClick = onClose) {
-            Icon(Icons.Filled.Close, contentDescription = "Close")
+            Icon(
+                imageVector = Icons.Filled.Close,
+                contentDescription = "Close"
+            )
         }
     }
 }

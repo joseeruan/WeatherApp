@@ -29,6 +29,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.core.util.Consumer
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavDestination.Companion.hasRoute
 import androidx.navigation.compose.currentBackStackEntryAsState
@@ -56,15 +57,15 @@ class MainActivity : ComponentActivity() {
         setContent {
             val navController = rememberNavController()
             val fbDB = remember { FBDatabase() }
-            val user = remember { Firebase.auth.currentUser }
-            val localDB = remember(user) { LocalDatabase(this, user?.uid ?: "default") }
+            val uid = Firebase.auth.currentUser?.uid ?: "guest"
+            val localDB =  remember { LocalDatabase(this, "$uid.db") }
             val repo = remember(fbDB, localDB) { Repository(fbDB, localDB) }
             val weatherService = remember { WeatherService(this) }
             val monitor = remember { ForecastMonitor(this) }
-
             val viewModel : MainViewModel = viewModel(
                 factory = MainViewModelFactory(repo, weatherService, monitor)
             )
+            val user = viewModel.user.collectAsStateWithLifecycle(null).value
 
             DisposableEffect(Unit) {
                 val listener = Consumer<Intent> { intent ->
@@ -112,7 +113,7 @@ class MainActivity : ComponentActivity() {
                     topBar = {
                         TopAppBar(
                             title = {
-                                val name = viewModel.user?.name ?: "[carregando...]"
+                                val name = user?.name ?: "[carregando...]"
                                 Text("Bem-vindo/a! $name")
                             },
                             actions = {
